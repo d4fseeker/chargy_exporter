@@ -2,15 +2,77 @@
 Prometheus Exporter for the luxembourgish Chargy public EV charger network
 
 
-## Usage
+## Preamble
 
+### No prebuilts
 This repository provides the Dockerfile and source code to build the chargy_exporter docker container.
 There are currently no plans to provide prebuilt dockerhub containers due to automatic rebuilds being a subscription feature and the risk of security issues increasing with the age of containers.
 
+### Data access
 The API Link and Key used below are provided through the OpenData initiative of the luxembourgish government. The link, API-key and data access license are subject to changes by the provider.
 Please see: https://data.public.lu/en/datasets/bornes-de-chargement-publiques-pour-voitures-electriques/
 
-### Basic Usage
+### License
+This code is licensed under MPL-2.0. Any derivative work and commercial usage within the bounds of the license are encouraged.
+
+### Data Refreshing
+The API provides new data every 5min. 
+To reduce load on the API servers and prevent getting kicked off, we cache the KML data for 5min.
+To reduce unnecessary data storage on Prometheus, we scrape the exporter every 5min.
+This means that worst-case the data is already 5min + 5min + 5min  = 15min old when it is being stored. This is considered acceptable for my use cases and the current stack and API does not permit to improve this significantly without significant drawbacks in storage capacity or network.
+
+## Usage
+
+### Query format
+The exporter iterates over each Chargy station --> Chargy device --> Chargy connector to provides the state metrics `chargy_connector_state` and info metrics `chargy_connector_detailed_state_info` per connector.
+A chargy station is identified by the location (.e.g the name of a Parking).
+A chargy device is the actual device your car is being connected to
+A chargy connector is the port/cable on the chargy device. A device can have 1-to-n connectors (but usually has 2).
+
+#### chargy_connector_state
+
+ 
+`chargy_connector_state`:  A simplified state list, the current connector state is on value 1, the other states are 0. Valid states are: [ "available","charging","unavailable" ]
+
+`connector`: Name of the connector, usually the device name followed by the connector number.
+
+`device`: Name of the device
+
+`station`: Name of the station/parking/location/... which contains the Chargy device
+
+`speed`: Max speed in kWh provided by this station. Most standard stations are 22kW
+
+
+#### chargy_connector_detailed_state_info
+
+`chargy_connector_detailed_state_info`:  The actual state as provided by the network for the station. A list of all known states is available in the file src/chargy.py
+
+`connector`: Name of the connector, usually the device name followed by the connector number.
+
+`device`: Name of the device
+
+`station`: Name of the station/parking/location/... which contains the Chargy device
+
+`speed`: Max speed in kWh provided by this station. Most standard stations are 22kW
+
+### Example query
+
+Sum the chargers of a given station by current state:
+```PromQL
+sum by (chargy_connector_state)  (chargy_connector_state{station="${chargy_station}"})
+```
+
+Sum the availability across the entire network:
+```
+sum by (chargy_connector_state)  (chargy_connector_state)
+```
+
+Percentage of stations with no charger available:
+```
+count( sum by (station) (chargy_connector_state{chargy_connector_state="available"}) == 0  ) / count( sum by (station) (chargy_connector_state) )
+```
+
+## Getting started
 
 To build and run a docker container
 ```bash
