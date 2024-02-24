@@ -23,4 +23,5 @@ WORKDIR /app
 RUN python -m compileall .
 
 #Command
+USER 1001:0
 CMD [ "python" ,  "exporter.py" ]
