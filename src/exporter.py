@@ -32,40 +32,6 @@ class ChargyCollector(Collector):
         yield m_state_simple
         yield m_state_detailed
 
-"""
-        c = InfoMetricFamily("health", "Health Monitoring")
-        c.add_metric(labels=name, value={"name": name, "status": status, "value": value})
-
-        #See example: https://github.com/torsdag/eggbasket/blob/ebb95d18954040908c064d000c75ff16151fb593/source/eggbasket/collector.py#L5
-        client_state = StateSetMetricFamily(
-            "active_licenses", "active license count", labels=("host", "port", "license", "user")
-        )        
-        for license in self._licenses:
-            license_counter.add_metric(
-                [license.name], len(license.licenses)
-            )
-
-            for client in license.licenses:
-                client_state.add_metric(
-                    (client.host, str(client.port), license.name, client.user), value={"active": True}
-                )
-
-        service_states = StateSetMetricFamily(
-            'pyca_service_state_info',
-            'Service State of pyCA processes',
-            labels=['service', 'state']
-        )
-
-        for service in Service.values():
-            c = CounterMetricFamily('my_counter_total', 'Help text', labels=['foo'])
-            service_states.add_metric(
-                [Service.str(service)],
-                self.get_state_dict(get_service_status(service))
-            )
-"""
-
-        
-
 
 ##
 ## Startup Prometheus Exporter
